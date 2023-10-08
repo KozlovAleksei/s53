@@ -9,7 +9,7 @@ print('start')
 
 gNetRoot = ''
 symbol = "BTCUSDT"
-interval = "10m"
+interval = "15m"
 
 def main(test):
     if test:
@@ -35,4 +35,12 @@ def main(test):
     while True:
         print('api_key=', api_key)
         print('api_secret=', api_secret)
+        gOpenPrice, SL_for_S, SL_for_B, gDights, gTick_size = mlb.get_candle_data(symbol, interval, cl)
+        print('gOpenPrice=', gOpenPrice)
+        print('SL_for_S=', SL_for_S)
+        print('SL_for_B=', SL_for_B)
+        print('gDights=', gDights)
+        print('gTick_size=', gTick_size)
+
+        breakpoint()
         time.sleep(3)

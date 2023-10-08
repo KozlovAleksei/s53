@@ -6,8 +6,8 @@ test = True
 
 if __name__ == '__main__':
     if test:
-        # mlb.main(test)
-        # pass
+        mlb.main(test)
+        pass
 
         while True:
             try:
@@ -17,6 +17,7 @@ if __name__ == '__main__':
                 time.sleep(11)
 
     else:
+
         while True:
             try:
                 mlb.main(test)
