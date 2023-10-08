@@ -8,7 +8,7 @@ from datetime import datetime
 # pd.set_option("display.max_columns", None)  # Установка значения display.max_columns равное None
 
 def get_candle_data(symbol, interval, cl, base_url="https://api.binance.com", end_point="/api/v3/exchangeInfo"):
-
+    LastCandleTime = ''
     print('symbol=', symbol)
     print('interval=', interval)
     print('cl=', cl)
@@ -22,7 +22,7 @@ def get_candle_data(symbol, interval, cl, base_url="https://api.binance.com", en
     :return: кортеж с значениями gOpenPrice, gDights, gTick_size
     """
 
-    def get_open_price_0(symbol, interval):
+    def get_candle_0(symbol, interval):
         """
         Функция для получения открытой цены для заданного символа и интервала
         :param symbol: символ
@@ -32,6 +32,7 @@ def get_candle_data(symbol, interval, cl, base_url="https://api.binance.com", en
         df = DataFrame(cl.klines(symbol, interval, limit=1)).iloc[:, :6]  # Получение данных о свечах и извлечение только нужных столбцов
         df.columns = ['time', 'open', 'high', 'low', 'close', 'volume']  # Присвоение имен столбцам
         return df.iloc[-1]  # Возвращение последней записи (последней строки) данных
+
 
     def get_high_low(symbol, interval, num_candles):
         """
@@ -48,13 +49,39 @@ def get_candle_data(symbol, interval, cl, base_url="https://api.binance.com", en
 
         # Преобразование значения столбца 'time' в формат времени в немецком стиле
         df['time'] = df['time'].apply(lambda x: datetime.fromtimestamp(x / 1000).strftime('%d.%m.%Y %H:%M:%S'))
+        LastCandleTime = df['time'].iloc[-1]  # Время последней свечи (последнее значение столбца 'time')
         df = df.drop(df.index[-1])  # Удаление последней строки в DataFrame
 
         # print(df[['time', 'open', 'high', 'low', 'close']])
 
         highest = df['high'].max()  # Вычисление максимального значения high
         lowest = df['low'].min()  # Вычисление минимального значения low
-        return highest, lowest  # Возвращение максимального значения high и минимального значения low
+        return highest, lowest, LastCandleTime  # Возвращение максимального значения high и минимального значения low
+
+    def get_highest_close_lowest_close(symbol, interval, num_candles):
+        """
+        Функция для получения максимального значения high и минимального значения low для заданного количества свечей
+        :param symbol: символ
+        :param interval: интервал
+        :param num_candles: количество свечей (кроме нулевой)
+        :return: кортеж с максимальным значением high и минимальным значением low
+        """
+        df = DataFrame(cl.klines(symbol, interval, limit=num_candles + 1)).iloc[-(num_candles + 1):,
+             :6]  # Получение данных о последних (num_candles + 1) свечах и извлечение только нужных столбцов
+        df.columns = ['time', 'open', 'high', 'low', 'close', 'volume']  # Присвоение имен столбцам
+        # df = df.iloc[::-1]  # Инвертирование порядка строк в DataFrame
+
+        # Преобразование значения столбца 'time' в формат времени в немецком стиле
+        df['time'] = df['time'].apply(lambda x: datetime.fromtimestamp(x / 1000).strftime('%d.%m.%Y %H:%M:%S'))
+        LastCandleTime = df['time'].iloc[-1]  # Время последней свечи (последнее значение столбца 'time')
+        df = df.drop(df.index[-1])  # Удаление последней строки в DataFrame
+
+        # print(df[['time', 'open', 'high', 'low', 'close']])
+
+        highest_close = df['close'].max()  # Вычисление максимального значения close
+        lowest_close = df['close'].min()  # Вычисление минимального значения close
+
+        return highest_close, lowest_close, LastCandleTime  # Возвращение максимального значения close и минимального значения close
 
     def get_gDights(gTick_size):
         """
@@ -66,11 +93,11 @@ def get_candle_data(symbol, interval, cl, base_url="https://api.binance.com", en
         decimal_part = str_gTick_size.split('.')[-1]  # Получение десятичной части величины
         return len(decimal_part.rstrip('0'))  # Получение количества значащих символов
 
-
     while True:
         try:
-            result01 = get_open_price_0(symbol, interval)  # Получение открытой цены
-            SL_for_S, SL_for_B = get_high_low(symbol, interval, 3)
+            result01 = get_candle_0(symbol, interval)  # Получение открытой цены
+            SL_for_S, SL_for_B, LastCandleTime = get_high_low(symbol, interval, 3)
+            up_level, dn_level, LastCandleTime = get_highest_close_lowest_close(symbol, interval, 5)
             get_json2 = requests.get(f"{base_url}{end_point}?symbol={symbol}")  # Выполнение GET-запроса к API биржи для получения информации о символе
             break
         except Exception as e:
@@ -80,14 +107,21 @@ def get_candle_data(symbol, interval, cl, base_url="https://api.binance.com", en
     gTick_size = float(get_json2.json()["symbols"][0]["filters"][0]["tickSize"])  # Извлечение значения gTick_size из полученных JSON данных
     gDights = get_gDights(gTick_size)  # Вычисление значения gDights для gTick_size
     gOpenPrice = round(float(result01['open']), gDights)  # Округление открытой цены до заданного количества знаков после запятой
+    gClosePrice = round(float(result01['close']), gDights)  # Округление открытой цены до заданного количества знаков после запятой
     SL_for_S = round(float(SL_for_S), gDights)
     SL_for_B = round(float(SL_for_B), gDights)
+    up_level = round(float(up_level), gDights)
+    dn_level = round(float(dn_level), gDights)
 
-
+    signal = 'no_signal'
+    if gOpenPrice > up_level:
+        signal = 'BUY'
+    if gOpenPrice < dn_level:
+        signal = 'SELL'
 
     # symbol_data = {}  # Создание пустого словаря symbol_data
     # symbol_data['gOpenPrice'] = gOpenPrice
     # symbol_data['gDights'] = gDights
     # symbol_data['gTick_size'] = gTick_size
 
-    return gOpenPrice, SL_for_S, SL_for_B, gDights, gTick_size  # Возврат значений gOpenPrice, gDights, gTick_size
+    return signal, LastCandleTime, gOpenPrice, gClosePrice, SL_for_S, SL_for_B, up_level, dn_level, gDights, gTick_size  # Возврат значений gOpenPrice, gDights, gTick_size
