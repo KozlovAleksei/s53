@@ -2,7 +2,7 @@ import mlb
 import time
 
 test = True
-test = False
+# test = False
 
 if __name__ == '__main__':
     if test:
