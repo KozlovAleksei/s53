@@ -22,4 +22,4 @@ def main(test):
     print('gNetRoot=', gNetRoot)
     while True:
         print('gNetRoot2=', gNetRoot)
-        time.sleep(12)
+        time.sleep(3)
