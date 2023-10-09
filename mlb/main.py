@@ -11,8 +11,8 @@ print('start')
 gNetRoot = ''
 symbol = "BTCUSDT"
 # interval = "30m"
-# interval = "1h"
-interval = "4h"
+interval = "1h"
+# interval = "4h"
 # interval = "1d"
 
 def main(test):
@@ -51,14 +51,22 @@ def main(test):
         print('dn_level=', dn_level)
         print('gDights=', gDights)
         print('gTick_size=', gTick_size)
+
+        # synchronize_system_time
         server_time = cl.time()['serverTime']
         Time1 = datetime.datetime.fromtimestamp(server_time / 1000).strftime('%H:%M:%S')
         Time2 = datetime.datetime.now().strftime('%H:%M:%S')
         mlb.synchronize_system_time(Time1, Time2)
         print('(', Time1, Time2, ')')
+        # synchronize_system_time +
 
         global gAccountBalance, btc_balance, usdt_balance, BalanceFile
         gAccountBalance, btc_balance, usdt_balance, BalanceFile = mlb.account_balance(gNetRoot, cl)
+
+        if gAccountBalance == -1:
+            print('main.py: gAccountBalance = -1')
+            time.sleep(3)
+            continue
 
         # Вычитаем 1 %
         lots_for_buy_btc = (usdt_balance / gOpenPrice) - (0.01 * (usdt_balance / gOpenPrice))

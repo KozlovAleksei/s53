@@ -1,12 +1,27 @@
 import datetime
 import os
+from binance.error import ClientError
 
 def account_balance(gNetRoot, cl):
     # print('account_balance')
     btc_balance = None
     usdt_balance = None
 
-    json_data = cl.account()
+    # json_data = None
+    try:
+        json_data = cl.account()
+
+    except ClientError as ce:
+        print(f"Ошибка в account_balance при получении данных в json_data из account: {ce}")
+        return -1, -1, -1, 'NoFile'
+
+    except Exception as e:
+        print(f"Ошибка в account_balance при получении данных в json_data из account: {e}")
+        return -1, -1, -1, 'NoFile'
+
+    # if json_data == None:
+    #     return -1, -1, -1, 'NoFile'
+
     for balance in json_data['balances']:
         if balance['asset'] == 'BTC':
             btc_balance = float(balance['free']) + float(balance['locked'])

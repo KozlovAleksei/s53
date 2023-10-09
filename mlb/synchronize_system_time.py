@@ -5,6 +5,13 @@ import random
 
 def synchronize_system_time(time_to_sync, current_time):
     """
+
+    server_time = cl.time()['serverTime']
+    Time1 = datetime.datetime.fromtimestamp(server_time / 1000).strftime('%H:%M:%S')
+    Time2 = datetime.datetime.now().strftime('%H:%M:%S')
+    mlb.synchronize_system_time(Time1, Time2)
+    print('(', Time1, Time2, ')')
+
     Функция синхронизирует системное время с указанным временем.
 
     Args:
