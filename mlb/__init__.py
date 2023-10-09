@@ -16,3 +16,5 @@ from .account_balance import account_balance
 
 from .rnd import get_str_rnd
 from .rnd import get_num_rnd
+
+from .synchronize_system_time import synchronize_system_time
