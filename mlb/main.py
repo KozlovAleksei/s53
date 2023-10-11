@@ -10,8 +10,8 @@ print('start')
 
 gNetRoot = ''
 symbol = "BTCUSDT"
-# interval = "30m"
-interval = "1h"
+interval = "15m"
+# interval = "1h"
 # interval = "4h"
 # interval = "1d"
 
